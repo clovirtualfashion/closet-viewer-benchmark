@@ -1,0 +1,58 @@
+{
+  "name": "zrest-benchmarker",
+  "files": [
+    "dist",
+    "install.sh"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/ingun37/zrest-benchmarker.git"
+  },
+  "version": "3.2.0",
+  "description": "Benchmarking system for zrest files.",
+  "main": "dist/index.js",
+  "bin": {
+    "zrest-benchmarker": "./dist/zrest-benchmarker.js"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "install": "./install.sh"
+  },
+  "keywords": [],
+  "author": "Ingun Jon",
+  "license": "ISC",
+  "dependencies": {
+    "@aws-sdk/client-s3": "^3.3.0",
+    "@rushstack/ts-command-line": "^4.7.7",
+    "@types/lodash": "^4.14.165",
+    "@types/node-fetch": "^2.5.7",
+    "@types/react": "^17.0.0",
+    "@types/react-dom": "^17.0.0",
+    "@types/uuid": "^8.3.0",
+    "fp-ts": "^2.9.0",
+    "fp-ts-rxjs": "^0.6.11",
+    "got": "^11.8.0",
+    "io-ts": "^2.2.13",
+    "lodash": "^4.17.20",
+    "node-fetch": "^2.6.1",
+    "page-request-emitter": "^2.4.0",
+    "react": "^17.0.1",
+    "react-dom": "^17.0.1",
+    "retry-ts": "^0.1.2",
+    "rxjs": "^6.6.3",
+    "uuid": "^8.3.1"
+  },
+  "devDependencies": {
+    "@types/jest": "^26.0.16",
+    "@types/puppeteer": "^5.4.2",
+    "jest": "^26.6.3",
+    "puppeteer": "^5.5.0",
+    "ts-jest": "^26.4.4",
+    "ts-node": "^9.0.0",
+    "typescript": "^4.1.2"
+  },
+  "peerDependencies": {
+    "@types/puppeteer": "^5.4.2",
+    "puppeteer": "^5.5.0"
+  }
+}
