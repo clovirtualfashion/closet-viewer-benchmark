@@ -124,7 +124,7 @@ test("aoeuaoeuaoeuaoeu", () => {
         )
     )();
     return aaa;
-}, 1000 * 15);
+}, 1000 * 60);
 // test("srest cache test", () => {
 //     const srestsTask = fetchSrests_token(testDataProvision.domain, testDataProvision.styleIds)(testDataProvision.token);
 //     const testtask = pipe(
