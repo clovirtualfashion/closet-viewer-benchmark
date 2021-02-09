@@ -36,7 +36,6 @@ import {capDelay, exponentialBackoff, limitRetries, monoidRetryPolicy, RetryStat
 import {retrying} from "retry-ts/lib/Task";
 import {log} from "fp-ts/Console";
 import {spawnSync} from "child_process";
-import {PutObjectCommand, S3Client} from "@aws-sdk/client-s3";
 import {getStructMonoid, Monoid, monoidSum} from "fp-ts/Monoid";
 import {sequenceT} from "fp-ts/Apply";
 
@@ -228,7 +227,7 @@ export function benchmarkPageMetric(liburl: U.URL, jsx: JSX.Element, benchmarkNa
 
         return pipe(
             sequenceT(taskEither.taskEither)(metricPairTask, timeTask),
-            taskEither.map(([[average, max], time]):Result => {
+            taskEither.map(([[average, max], time]): Result => {
                 const averageKeyChanged = pipe(
                     average,
                     record.map(v => v / modelCount),
@@ -343,7 +342,7 @@ function withDownloadedZrests<_A>(zresturls: U.URL[], task: ReaderTaskEither<rea
     return bracket(downloadTask, task, releaseTask)
 }
 
-export function benchmarkZrestLoading(libURL: U.URL, zrestURLs: U.URL[], benchmarkName:string): TaskEither<Error, Result> {
+export function benchmarkZrestLoading(libURL: U.URL, zrestURLs: U.URL[], benchmarkName: string): TaskEither<Error, Result> {
     console.log("Loading benchmarking start");
     return withDownloadedZrests(zrestURLs, cachedzrests => {
         return benchmarkPageMetric(libURL, template(libURL, cachedzrests), benchmarkName, zrestURLs.length)
@@ -474,26 +473,8 @@ export function withCachedSrests<_V>(srests: readonly SRest[], task: ReaderTaskE
 
 const startTracing = tryCatchK((page: Page) => page.tracing.start({}), identity);
 const stopTracing = tryCatchK((page: Page) => page.tracing.stop(), identity);
-const s3 = new S3Client({region: 'ap-northeast-2'});
 
-function keyToURL(key: string, bucket: string): string {
-    const path = key.split("/").map(encodeURIComponent).join("/")
-    const safebucket = encodeURIComponent(bucket)
-    return `https://${safebucket}.s3.ap-northeast-2.amazonaws.com/${path}`
-}
-
-const uploadTask = tryCatchK((buffer: Buffer, bucket: string, key: string) => {
-    return s3.send(new PutObjectCommand({
-        Body: buffer,
-        ContentLength: buffer.length,
-        Bucket: bucket,
-        GrantRead: 'uri="http://acs.amazonaws.com/groups/global/AllUsers"',
-        ContentType: "text/html",
-        Key: key
-    }))
-}, identity);
-
-export function traceZrestLoading(liburl: URL, zrestURL: URL, bucket: string, key: string) {
+export function makeTraceZrestLoading({liburl, zrestURL}: { liburl: URL, zrestURL: URL }) {
     console.log("Trace zrest start", liburl);
     const browserReader = (browser: Browser) => {
         const pageTask = createNewIncognitoPage()(browser);
@@ -536,25 +517,79 @@ export function traceZrestLoading(liburl: URL, zrestURL: URL, bucket: string, ke
                     return taskEither.left(new Error("CATAPULT failed with status null"));
                 }
             }),
-            taskEither.chainW(htmlname => {
-                const htmlbuffer = fs.readFileSync(htmlname);
-                return uploadTask(htmlbuffer, bucket, key);
-            }),
-            taskEither.map(_ => {
-                return keyToURL(key, bucket);
-            }),
             taskEither.mapLeft(e => {
                 if (e instanceof Error) {
                     return e
                 } else {
                     console.error(e);
-                    return new Error("failed")
+                    return new Error("failed to make tracing")
                 }
             }),
         )
     }
     return runWithBrowser(launchOption, browserReader);
 }
+
+// export function traceZrestLoading(liburl: URL, zrestURL: URL, bucket: string, key: string) {
+//     console.log("Trace zrest start", liburl);
+//     const browserReader = (browser: Browser) => {
+//         return pipe(
+//             pageTask,
+//             taskEither.chainFirst(startTracing),
+//             taskEither.chainFirstW(page => {
+//                 const events = streamPageEvents(page, htmlurl)({
+//                     filter: r => r.url().startsWith(hookDomain),
+//                     alterResponse: () => none,
+//                     debugResponse: () => {
+//                     }
+//                 }).pipe(stopWhenError, map(either.map(logEvent)))
+//                 return toTaskEither(events);
+//             }),
+//             taskEither.chain(stopTracing),
+//             taskEither.chainW((buffer): TaskEither<Error, string> => {
+//                 const uuid = uuidv4().toString()
+//                 const jsonname = uuid + ".json";
+//                 fs.writeFileSync(jsonname, buffer);
+//                 const htmlname = uuid + ".html";
+//                 const result = spawnSync(path.resolve(__dirname, "..", "catapult", "tracing", "bin", "trace2html"), [jsonname, "--output=" + htmlname]);
+//                 const stdout = result.stdout as any;
+//                 if (stdout instanceof Buffer) {
+//                     console.log("CATAPULT", stdout.toString("utf8"))
+//                 } else if (typeof stdout === 'string') {
+//                     console.log("CATAPULT", stdout);
+//                 }
+//                 const status = result.status;
+//                 console.log("CATAPULT status", result.status);
+//
+//                 if (status !== null) {
+//                     if (status === 0) {
+//                         return taskEither.right(htmlname);
+//                     } else {
+//                         return taskEither.left(new Error("CATAPULT failed with status " + status.toString()))
+//                     }
+//                 } else {
+//                     return taskEither.left(new Error("CATAPULT failed with status null"));
+//                 }
+//             }),
+//             taskEither.chainW(htmlname => {
+//                 const htmlbuffer = fs.readFileSync(htmlname);
+//                 return uploadTask(htmlbuffer, bucket, key);
+//             }),
+//             taskEither.map(_ => {
+//                 return keyToURL(key, bucket);
+//             }),
+//             taskEither.mapLeft(e => {
+//                 if (e instanceof Error) {
+//                     return e
+//                 } else {
+//                     console.error(e);
+//                     return new Error("failed")
+//                 }
+//             }),
+//         )
+//     }
+//     return runWithBrowser(launchOption, browserReader);
+// }
 
 function logEvent(e: PPEvent) {
     switch (e._tag) {

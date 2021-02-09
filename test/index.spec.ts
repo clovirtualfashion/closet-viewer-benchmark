@@ -3,7 +3,7 @@ import {
     benchmarkFPS,
     benchmarkSrestLoading,
     benchmarkZrestLoading,
-    traceZrestLoading,
+    makeTraceZrestLoading,
 } from "../src";
 import {URL} from "url";
 import {testDataProvision} from "./test-data-provision";
@@ -109,8 +109,12 @@ test("srest loading anti test", () => {
     })
 }, 1000 * 60 * 10)
 test("aoeuaoeuaoeuaoeu", () => {
-    const task = traceZrestLoading(testDataProvision.liburl, testDataProvision.zrestURLs[0], "viewer-tracings", "aaaaaa.html");
-    const aaa = pipe(
+    // const task = makeTraceZrestLoading(testDataProvision.liburl, testDataProvision.zrestURLs[0]);
+    const task = makeTraceZrestLoading({
+        liburl: testDataProvision.liburl, zrestURL: testDataProvision.zrestURLs[0]
+    });
+
+    return pipe(
         task,
         taskEither.bimap(
             x => {
@@ -123,7 +127,6 @@ test("aoeuaoeuaoeuaoeu", () => {
             }
         )
     )();
-    return aaa;
 }, 1000 * 60);
 // test("srest cache test", () => {
 //     const srestsTask = fetchSrests_token(testDataProvision.domain, testDataProvision.styleIds)(testDataProvision.token);
