@@ -471,7 +471,9 @@ export function withCachedSrests<_V>(srests: readonly SRest[], task: ReaderTaskE
         })
 }
 
-const startTracing = tryCatchK((page: Page) => page.tracing.start({}), identity);
+const startTracing = tryCatchK((page: Page) => page.tracing.start({
+    categories: ["gpu", "memory", "skia.gpu", "gpu.angle", "gpu.capture", "gpu.memory"]
+}), identity);
 const stopTracing = tryCatchK((page: Page) => page.tracing.stop(), identity);
 
 export function makeTraceZrestLoading({liburl, zrestURL}: { liburl: URL, zrestURL: URL }) {
