@@ -17,7 +17,8 @@
   "scripts": {
     "test": "jest",
     "install": "./install.sh",
-    "semantic-release": "semantic-release"
+    "semantic-release": "semantic-release",
+    "build": "tsc --declaration"
   },
   "keywords": [],
   "author": "Ingun Jon",
