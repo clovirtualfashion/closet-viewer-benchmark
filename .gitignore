@@ -1,0 +1,5 @@
+node_modules
+downloader.ts
+.idea
+catapult
+dist
