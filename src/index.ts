@@ -193,7 +193,7 @@ export function benchmarkPageMetric(liburl: U.URL, jsx: JSX.Element, benchmarkNa
             observableEither.chain(fromTaskEither),
             tap(eth => {
                 if (isRight(eth)) {
-                    console.log("Metrics !", eth.right);
+                    // console.log("Metrics !", eth.right);
                 }
             })
         )
