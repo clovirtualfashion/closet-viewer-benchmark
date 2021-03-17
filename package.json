@@ -26,6 +26,7 @@
   "dependencies": {
     "@aws-sdk/client-s3": "^3.3.0",
     "@aws-sdk/client-secrets-manager": "^3.8.1",
+    "@aws-sdk/s3-request-presigner": "^3.8.1",
     "@rushstack/ts-command-line": "^4.7.7",
     "@types/lodash": "^4.14.165",
     "@types/node-fetch": "^2.5.7",
