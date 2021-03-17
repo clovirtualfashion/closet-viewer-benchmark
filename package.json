@@ -25,6 +25,7 @@
   "license": "ISC",
   "dependencies": {
     "@aws-sdk/client-s3": "^3.3.0",
+    "@aws-sdk/client-secrets-manager": "^3.8.1",
     "@rushstack/ts-command-line": "^4.7.7",
     "@types/lodash": "^4.14.165",
     "@types/node-fetch": "^2.5.7",
@@ -48,6 +49,7 @@
     "@types/jest": "^26.0.16",
     "@types/puppeteer": "^5.4.2",
     "jest": "^26.6.3",
+    "prettier": "^2.2.1",
     "puppeteer": "^5.5.0",
     "semantic-release": "^17.3.7",
     "ts-jest": "^26.4.4",
