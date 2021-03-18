@@ -32,6 +32,7 @@ const s3 = new S3Client({ region: "ap-northeast-2" });
 
 argTask
   .then(async (info) => {
+    noti("Benchmarking STARTED");
     const secretTestdata = await secretTestDataTask();
     if (isLeft(secretTestdata)) {
       throw secretTestdata.left;
