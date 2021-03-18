@@ -25,6 +25,7 @@ import fs from "fs";
 import { tryCatchK } from "fp-ts/TaskEither";
 import { PutObjectCommand, S3Client } from "@aws-sdk/client-s3";
 import { secretTestDataTask } from "./secrets";
+import {noti} from "./slack";
 
 const argTask = parseArgvs(process.argv);
 const s3 = new S3Client({ region: "ap-northeast-2" });
@@ -142,9 +143,13 @@ argTask
       )
     );
   })
+  .then(() => {
+    noti("Benchmarking SUCCEED 🎉. Go check https://main.d25rzop7f0k2kq.amplifyapp.com")
+  })
   .catch((err) => {
     console.log("caugut a error");
     console.error(err);
+    noti("Benchmarking Failed ❌: " + JSON.stringify(err));
   });
 
 function keyToURL(key: string, bucket: string): string {
