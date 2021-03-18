@@ -14,6 +14,7 @@ import { Readable } from "stream";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import * as process from "process";
 import { fromNullable, toUndefined } from "fp-ts/Option";
+import { isRight } from "fp-ts/Either";
 
 // Load the AWS SDK
 const region = "ap-northeast-2",
@@ -59,6 +60,31 @@ const secretTask = tryCatchK(secretRequest, (err) => {
     console.error(err);
   }
 });
+const Secret = D.type({
+  SLACK_TOKEN: D.string,
+});
+export function slackToken() {
+  if (process.env.SLACK_TOKEN) return Promise.resolve(process.env.SLACK_TOKEN);
+  return secretClient
+    .send(
+      new GetSecretValueCommand({
+        SecretId: "closet-viewer-secrets",
+      })
+    )
+    .then((xx) => xx.SecretString)
+    .then((str) => {
+      if (str) {
+        return str;
+      } else throw "secret is undefined";
+    })
+    .then(JSON.parse)
+    .then(Secret.decode)
+    .then((x) => {
+      // console.log(x);
+      if (isRight(x)) return x.right.SLACK_TOKEN;
+      else throw x.left;
+    });
+}
 
 const secretTestData = D.type({
   zrests: D.record(D.type({ key: D.string })),

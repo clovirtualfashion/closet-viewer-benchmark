@@ -1,5 +1,6 @@
 import { secretTestDataTask } from "../src/secrets";
 import { isRight } from "fp-ts/Either";
+import { noti } from "../src/slack";
 
 test("secret", () => {
   return expect(
@@ -13,5 +14,11 @@ test("secret", () => {
         return false;
       }
     })
+  ).resolves.toBeTruthy();
+});
+
+test("slack", () => {
+  return expect(
+    noti("closet-viewer-benchmark unit test success")
   ).resolves.toBeTruthy();
 });

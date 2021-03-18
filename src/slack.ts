@@ -1,12 +1,23 @@
-import {WebClient} from "@slack/web-api";
+import { WebClient } from "@slack/web-api";
+import { slackToken } from "./secrets";
 
-const SLACK_TOKEN = process.env.SLACK_TOKEN;
-
-const web = new WebClient(SLACK_TOKEN);
+const client = slackToken()
+  .then((tk) => new WebClient(tk))
+  .catch((err) => {
+    console.error(err);
+    return null;
+  });
 
 export function noti(message: string) {
-  return web.chat.postMessage({
-    channel: "#z_alert_closet_viewer",
-    text: message,
-  }).catch(console.error).finally(()=>console.log("SENT MESSAGE"));
+  return client
+    .then((web) => {
+      if (web)
+        return web.chat.postMessage({
+          channel: "#z_alert_closet_viewer",
+          text: message,
+        });
+      else throw "web is null";
+    })
+    .catch(console.error)
+    .finally(() => console.log("SENT MESSAGE"));
 }
