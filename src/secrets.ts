@@ -77,7 +77,7 @@ const downloadTextRequest = (config: { Bucket: string; Key: string }) =>
       }
       return result;
     } else {
-      throw "b is not Readable";
+      throw config.Key + " is not Readable" + typeof b;
     }
   });
 
@@ -86,6 +86,7 @@ const downloadTextTask = tryCatchK(downloadTextRequest, (err) => {
 });
 
 function key2URL(Key: string, Bucket: string) {
+  // console.debug(Key, Bucket);
   return getSignedUrl(
     s3Client as any,
     new GetObjectCommand({ Key, Bucket }) as any,
@@ -112,7 +113,14 @@ export const secretTestDataTask = pipe(
   taskEither.map(JSON.parse),
   taskEither.chainEitherKW(secretTestData.decode),
   taskEither.chain(({ zrests, srests }) => {
-    return pipe(
+    const newZrests = pipe(
+      zrests,
+      record.map((x) => key2URLTask(x.key, bucket)),
+      record.sequence(taskEither.taskEither),
+      taskEither.mapLeft((x) => x as any)
+    );
+    // const newZrests = taskEither.of( zrests);
+    const newSrests = pipe(
       srests,
       record.map((xx) =>
         pipe(
@@ -131,11 +139,21 @@ export const secretTestDataTask = pipe(
         )
       ),
       record.sequence(taskEither.taskEither),
-      taskEither.map((srests) => ({
-        zrests,
-        srests,
-      }))
+      taskEither.mapLeft((x) => x as any)
     );
+    return pipe(
+      newZrests,
+      taskEither.chain((zrests) =>
+        pipe(
+          newSrests,
+          taskEither.map((srests) => ({ zrests, srests }))
+        )
+      )
+    );
+    // return pipe(
+    //   sequenceT(taskEither.taskEither)(newZrests, newSrests),
+    //   taskEither.map(([zrests, srests]) => ({ zrests, srests }))
+    // );
   }),
   taskEither.mapLeft((x) => x as any)
 );
