@@ -33,7 +33,11 @@ jobs:
         python-version: ${{ matrix.python-version }}
     - run: npm ci
     - run: npm run build --if-present
-    - run: npm test
+    - name: "TEST"
+      env:
+        AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+      run: npm test
     - name: Release
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

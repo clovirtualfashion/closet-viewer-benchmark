@@ -8,10 +8,12 @@ import {
 import * as D from "io-ts/Decoder";
 import { tryCatchK } from "fp-ts/TaskEither";
 import { pipe } from "fp-ts/lib/function";
-import {array, record, taskEither} from "fp-ts";
-import { GetObjectCommand, S3Client, } from "@aws-sdk/client-s3";
+import { array, option, record, taskEither } from "fp-ts";
+import { GetObjectCommand, S3Client } from "@aws-sdk/client-s3";
 import { Readable } from "stream";
-import {getSignedUrl} from "@aws-sdk/s3-request-presigner";
+import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
+import * as process from "process";
+import { fromNullable, toUndefined } from "fp-ts/Option";
 
 // Load the AWS SDK
 const region = "ap-northeast-2",
@@ -20,8 +22,19 @@ const region = "ap-northeast-2",
 // decodedBinarySecret;
 
 // Create a Secrets Manager client
+
+const credentials = pipe(
+  {
+    accessKeyId: process.env.AWS_ACCESS_KEY_ID,
+    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
+  },
+  record.map(fromNullable),
+  record.sequence(option.option),
+  toUndefined
+);
 const secretClient = new SecretsManagerClient({
   region: region,
+  credentials,
 });
 
 const s3Client = new S3Client({
@@ -72,15 +85,19 @@ const downloadTextTask = tryCatchK(downloadTextRequest, (err) => {
   console.error("Failed to download", err);
 });
 
-function key2URL(Key:string, Bucket: string) {
-    return getSignedUrl(s3Client as any, new GetObjectCommand({Key, Bucket}) as any, {
-        expiresIn: 60 * 30 // 30 minutes
-    })
+function key2URL(Key: string, Bucket: string) {
+  return getSignedUrl(
+    s3Client as any,
+    new GetObjectCommand({ Key, Bucket }) as any,
+    {
+      expiresIn: 60 * 30, // 30 minutes
+    }
+  );
 }
 
 const key2URLTask = tryCatchK(key2URL, (err) => {
-    console.error("Failed to create presigned url", err);
-})
+  console.error("Failed to create presigned url", err);
+});
 
 const SRest = D.type({
   dracos: D.array(D.string),
@@ -102,11 +119,15 @@ export const secretTestDataTask = pipe(
           downloadTextTask({ Bucket: bucket, Key: xx.key }),
           taskEither.map(JSON.parse),
           taskEither.chainEitherKW(SRest.decode),
-          taskEither.map(record.map(array.map(key => {
-            return key2URLTask(key, bucket);
-          }))),
+          taskEither.map(
+            record.map(
+              array.map((key) => {
+                return key2URLTask(key, bucket);
+              })
+            )
+          ),
           taskEither.map(record.map(taskEither.sequenceArray)),
-          taskEither.chainW(record.sequence(taskEither.taskEither)),
+          taskEither.chainW(record.sequence(taskEither.taskEither))
         )
       ),
       record.sequence(taskEither.taskEither),
