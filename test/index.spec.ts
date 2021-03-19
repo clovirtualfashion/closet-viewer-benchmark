@@ -80,7 +80,7 @@ test("bundlesize", () => {
 
 test("srest loading test", () => {
     const aaa = new URL("https://viewer-library.s3.ap-northeast-2.amazonaws.com/closet.viewer-qkqk.js")
-    const task = benchmarkSrestLoading(aaa, testDataProvision.srestJsonURLs);
+    const task = benchmarkSrestLoading(aaa, testDataProvision.srestJsonURLs, "srest loading benchmarking");
 
     return task().then(eth => {
         if (isRight(eth)) {
@@ -96,7 +96,7 @@ test("srest loading test", () => {
 test("srest loading anti test", () => {
     const badLibURL = "https://viewer-library.s3.ap-northeast-2.amazonaws.com/wrong.closet.viewer-render.js";
 
-    const task = benchmarkSrestLoading(new URL(badLibURL), testDataProvision.srestJsonURLs);
+    const task = benchmarkSrestLoading(new URL(badLibURL), testDataProvision.srestJsonURLs, "srest loading benchmarking");
 
     return task().then(eth => {
         if (isRight(eth)) {
