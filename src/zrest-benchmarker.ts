@@ -4,6 +4,7 @@ import {
   benchmarkBundleSize,
   benchmarkFPS,
   benchmarkSrestLoading,
+  benchmarkSrestLoadingWithSrests,
   benchmarkZrestLoading,
   makeTraceZrestLoading,
   Result,
@@ -41,6 +42,10 @@ argTask
       secretTestdata.right.zrests,
       record.collect((_, v) => new URL(v))
     );
+    const secretSrests = pipe(
+      secretTestdata.right.srests,
+      record.collect((_, v) => v)
+    );
     const benchmarkingTasks: Either<unknown, Result>[] = [
       await benchmarkBundleSize(info.libraryURL),
       await benchmarkZrestLoading(
@@ -55,7 +60,11 @@ argTask
         info.fpsViewHeight,
         info.fpsMS
       )(),
-      await benchmarkSrestLoading(info.libraryURL, info.srestJsonURLs)(),
+      await benchmarkSrestLoading(
+        info.libraryURL,
+        info.srestJsonURLs,
+        "srest loading benchmarking"
+      )(),
       await benchmarkZrestLoading(
         info.libraryURL,
         info.comparisonZrestURLs,
@@ -64,9 +73,13 @@ argTask
       await benchmarkZrestLoading(
         info.libraryURL,
         secretZrests,
-        "zrest set 3 loading"
+        "special zrest loading"
       )(),
-
+      await benchmarkSrestLoadingWithSrests(
+        info.libraryURL,
+        secretSrests,
+        "special srest loading"
+      )(),
       // await retryN(8, ()=>benchmarkSrestLoading(info.libraryURL, info.srestJsonURLs))()
     ];
     const benchmarkingResults = pipe(

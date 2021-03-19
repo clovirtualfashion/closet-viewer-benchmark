@@ -29,6 +29,7 @@ import {
   metricSumMonoid,
   monoidMax,
   monoidMin,
+  SRest,
 } from "./types";
 import fetch from "node-fetch";
 import { none, Option, some } from "fp-ts/Option";
@@ -65,24 +66,32 @@ function fetchJSON(url: string) {
     .then(JSON.parse);
 }
 
+export function benchmarkSrestLoadingWithSrests(
+  liburl: U.URL,
+  srests: readonly SRest[],
+  benchmarkingName: string
+) {
+  return benchmarkPageMetric(
+    liburl,
+    templateSrest(liburl, srests),
+    benchmarkingName,
+    srests.length
+  );
+}
+
 export function benchmarkSrestLoading(
   liburl: U.URL,
-  srestJsonURLs: readonly string[]
+  srestJsonURLs: readonly string[],
+  benchmarkingName: string
 ) {
   return pipe(
     srestJsonURLs,
     readonlyArray.map(tryCatchK(fetchJSON, identity)),
     readonlyArray.map(taskEither.chainEitherKW(D_SRest.decode)),
     taskEither.sequenceArray,
-    taskEither.chainW((srests) => {
-      // return withCachedSrests(srests, (cachedSrests)=> benchmarkPageMetric(liburl, templateSrest(liburl, cachedSrests), "srest loading benchmarking"))
-      return benchmarkPageMetric(
-        liburl,
-        templateSrest(liburl, srests),
-        "srest loading benchmarking",
-        srestJsonURLs.length
-      );
-    })
+    taskEither.chainW((srests) =>
+      benchmarkSrestLoadingWithSrests(liburl, srests, benchmarkingName)
+    )
   );
 }
 

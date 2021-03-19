@@ -15,6 +15,7 @@ import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import * as process from "process";
 import { fromNullable, toUndefined } from "fp-ts/Option";
 import { isRight } from "fp-ts/Either";
+import { D_SRest } from "./types";
 
 // Load the AWS SDK
 const region = "ap-northeast-2",
@@ -63,6 +64,7 @@ const secretTask = tryCatchK(secretRequest, (err) => {
 const Secret = D.type({
   SLACK_TOKEN: D.string,
 });
+
 export function slackToken() {
   if (process.env.SLACK_TOKEN) return Promise.resolve(process.env.SLACK_TOKEN);
   return secretClient
@@ -126,12 +128,6 @@ const key2URLTask = tryCatchK(key2URL, (err) => {
   console.error("Failed to create presigned url", err);
 });
 
-const SRest = D.type({
-  dracos: D.array(D.string),
-  images: D.array(D.string),
-  rest: D.array(D.string),
-});
-
 export const secretTestDataTask = pipe(
   secretTask(),
   taskEither.map((x) => x.SecretString),
@@ -152,7 +148,7 @@ export const secretTestDataTask = pipe(
         pipe(
           downloadTextTask({ Bucket: bucket, Key: xx.key }),
           taskEither.map(JSON.parse),
-          taskEither.chainEitherKW(SRest.decode),
+          taskEither.chainEitherKW(D_SRest.decode),
           taskEither.map(
             record.map(
               array.map((key) => {
@@ -160,7 +156,7 @@ export const secretTestDataTask = pipe(
               })
             )
           ),
-          taskEither.map(record.map(taskEither.sequenceArray)),
+          taskEither.map(record.map(array.sequence(taskEither.taskEither))),
           taskEither.chainW(record.sequence(taskEither.taskEither))
         )
       ),
